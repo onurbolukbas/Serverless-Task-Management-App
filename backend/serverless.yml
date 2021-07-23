@@ -3,8 +3,6 @@ service: serverless-todo-app
 plugins:
   - serverless-webpack
   - serverless-iam-roles-per-function
-  - serverless-reqvalidator-plugin
-  - serverless-aws-documentation
   - serverless-plugin-tracing
 
 provider:
@@ -23,25 +21,6 @@ provider:
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
     TODO_IMAGES_S3_BUCKET: serverless-todo-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
-
-custom:
-  topicName: imagesTopic-${self:provider.stage}
-  documentation:
-    api:
-      info:
-        version: v1.0
-        title: Todo Api
-        description: Serverless To-Do Application
-    models:
-      - name: CreateToDoRequest
-        contentType: application/json
-        schema: ${file(src/docModels/create_todo_request.json)}
-      - name: UpdateToDoRequest
-        contentType: application/json
-        schema: ${file(src/docModels/update_todo_request.json)}
-    authorizers: 
-      - name: Auth
-        description: Jwt authorizer
 
 functions:
   Auth:
@@ -70,12 +49,9 @@ functions:
           path: todos
           cors: true
           authorizer: Auth
-          reqValidatorName: MyRequestValidator
-          documentation:
-            summary: Creates a new todo item
-            description: Creates a new todo item
-            requestModel:
-              'application/json': CreateToDoRequest
+          request: 
+            schema:
+              application/json: ${file(models/create_todo_request.json)}
     iamRoleStatements:
       - Effect: Allow        
         Action:
@@ -90,12 +66,9 @@ functions:
           path: todos/{todoId}
           cors: true
           authorizer: Auth
-          reqValidatorName: MyRequestValidator
-          documentation:
-            summary: Updates a existing todo item
-            description: Updates a existing todo item
-            requestModel:
-              'application/json': UpdateToDoRequest
+          request: 
+            schema:
+              application/json: ${file(models/create_todo_request.json)}
     iamRoleStatements:
       - Effect: Allow        
         Action:
@@ -147,10 +120,10 @@ resources:
         RestApiId:
           Ref: ApiGatewayRestApi
 
-    MyRequestValidator:
+    RequestBodyValidator:
       Type: "AWS::ApiGateway::RequestValidator"
       Properties:
-        Name: 'my-request-validator'
+        Name: 'request-body-validator'
         RestApiId: 
           Ref: ApiGatewayRestApi
         ValidateRequestBody: true
